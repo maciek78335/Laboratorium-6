@@ -1,42 +1,38 @@
-#include<stdio.h>
+#include <stdio.h>
 #include "mpi.h"
-#include<sys/types.h>
-#include<math.h>
-#include<stdlib.h>
-#include<time.h>
-
-
-float power(float x, float y)
-{
-float res = 1;
-for(int i=1; i<=y; i++)
-{
-  res *=x;
-  }
-  return res;
-}
-
+#include <math.h>
+ 
 int main(int argc, char **argv)
 {
-   int rank, size, p, n;
-   float pi, sum;
-   MPI_Init(&argc, &argv);
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-   MPI_Comm_size(MPI_COMM_WORLD, &size);
-   printf("Podaj p: ");
-   scanf("%d", &p);
-   srand(time(NULL));
-   
-for(int i = 0; i<=p; i++){
-n = rand()%5000+100;
-for(int j=1; j<=n; j++)
+double pi;
+int pn, n, p;
+int t = 10;
+double var = pow(-1, p-1);
+ 
+MPI_Init(&argc, &argv);
+MPI_Comm_rank(MPI_COMM_WORLD, &pn);
+MPI_Comm_size(MPI_COMM_WORLD, &n);
+MPI_Status st;
+ 
+if(pn == 0)
 {
-  sum += power(-1,j-1)/(2*j-1);
+p = pn + 1;
+pi = var / ((2*p)-1)*4;
+MPI_Send(&pi, 1, MPI_DOUBLE, pn+1, t, MPI_COMM_WORLD);
 }
-pi = 4*sum;
-printf("%f", pi);
+if((pn > 0) && (pn<n))
+{
+MPI_Recv(&pi, 1, MPI_DOUBLE, pn-1, t, MPI_COMM_WORLD, &st);
+p = pn+1;
+pi = pi/4;
+pi = pi+var/((2*p)-1);
+pi = pi*4;
+printf("Process: %d, approximation: %f\n", pn, pi);
+if(pn != n-1)
+{
+MPI_Send(&pi, 1, MPI_DOUBLE, pn+1, t, MPI_COMM_WORLD);
 }
-printf("process %d of %d", rank, size);
+}
 MPI_Finalize();
 return 0;
 }
